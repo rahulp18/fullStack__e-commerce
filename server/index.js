@@ -13,6 +13,6 @@ app.use(bodyparser.json());
 ConnectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/product', productRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.listen(PORT, () => console.log(`Server is listing on port number ${PORT}`));

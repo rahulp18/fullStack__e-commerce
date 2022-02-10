@@ -6,7 +6,12 @@ import Footer from '../components/Footer';
 import Newsletter from '../components/Newsletter';
 import { mobile } from '../responsive';
 import Announcement from '../components/Announcement';
-
+import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useEffect } from 'react';
+import { publicRequest } from '../requestMethod';
+import { addProduct } from '../redux/cartRedux';
+import { useDispatch } from 'react-redux';
 // Components
 
 const Container = styled.div``;
@@ -61,7 +66,7 @@ const FilterTitle = styled.span`
   font-size: 20px;
 `;
 
-const FilterColor = styled.span`
+const FilterColor = styled.div`
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -70,19 +75,18 @@ const FilterColor = styled.span`
   cursor: pointer;
 `;
 
-const FilterSize = styled.div`
+const FilterSize = styled.select`
   margin-left: 10px;
   padding: 5px;
 `;
 
 const FilterSizeOption = styled.option``;
 const AddContainer = styled.div`
-   width:50%:
-   display:flex;
-   align-items:center;
-   justify-content:space-between;
-   ${mobile({ width: '100%' })}
-
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  ${mobile({ width: '100%' })}
 `;
 const AmmountContainer = styled.div`
   display: flex;
@@ -116,49 +120,72 @@ const Button = styled.button`
 `;
 
 const Product = () => {
+  const location = useLocation();
+  const id = location.pathname.split('/')[2];
+  const [product, setProduct] = useState({});
+  const [quantity, setQuantity] = useState(1);
+  const [color, setColor] = useState('');
+  const [size, setSize] = useState('');
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const getProduct = async () => {
+      try {
+        const res = await publicRequest.get(`/products/find/${id}`);
+
+        setProduct(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getProduct();
+  }, [id]);
+
+  const handleQuantity = (type) => {
+    if (type === 'dec') {
+      quantity > 1 && setQuantity(quantity - 1);
+    } else {
+      setQuantity(quantity + 1);
+    }
+  };
+  const handleClick = () => {
+    console.log(color, size);
+    dispatch(addProduct({ ...product, quantity, color, size }));
+  };
   return (
     <Container>
       <Navbar />
       <Announcement />
       <Wrapper>
         <ImageContainer>
-          <Image src="https://i.ibb.co/S6qMxwr/jean.jpg" alt="image" />
+          <Image src={product.img} alt="image" />
         </ImageContainer>
         <InfoContainer>
-          <Title>Denim Jumpusite</Title>
-          <Desc>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            venenatis, dolor in finibus malesuada, lectus ipsum porta nunc, at
-            iaculis arcu nisi sed mauris. Nulla fermentum vestibulum ex, eget
-            tristique tortor pretium ut. Curabitur elit justo, consequat id
-            condimentum ac, volutpat ornare.
-          </Desc>
-          <Price>₹30</Price>
+          <Title>{product.title}</Title>
+          <Desc>{product.desc}</Desc>
+          <Price>₹{product.price}</Price>
           <FillterContainer>
             <Filter>
               <FilterTitle>Color</FilterTitle>
-              <FilterColor color="black" />
-              <FilterColor color="darkblue" />
-              <FilterColor color="gray" />
+              {product.color?.map((c) => (
+                <FilterColor color={c} key={c} onClick={() => setColor(c)} />
+              ))}
             </Filter>
             <Filter>
               <FilterTitle>Size</FilterTitle>
-              <FilterSize>
-                <FilterSizeOption>XS</FilterSizeOption>
-                <FilterSizeOption>S</FilterSizeOption>
-                <FilterSizeOption>M</FilterSizeOption>
-                <FilterSizeOption>L</FilterSizeOption>
-                <FilterSizeOption>XL</FilterSizeOption>
+              <FilterSize onChange={(e) => setSize(e.target.value)}>
+                {product.size?.map((s) => (
+                  <FilterSizeOption key={s}>{s}</FilterSizeOption>
+                ))}
               </FilterSize>
             </Filter>
           </FillterContainer>
           <AddContainer>
             <AmmountContainer>
-              <Remove />
-              <Amount>1</Amount>
-              <Add />
+              <Remove onClick={() => handleQuantity('dec')} />
+              <Amount>{quantity}</Amount>
+              <Add onClick={() => handleQuantity('inc')} />
             </AmmountContainer>
-            <Button>ADD TO CART</Button>
+            <Button onClick={handleClick}>ADD TO CART</Button>
           </AddContainer>
         </InfoContainer>
       </Wrapper>

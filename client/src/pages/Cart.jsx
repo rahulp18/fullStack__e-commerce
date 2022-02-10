@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Add, Remove } from '@mui/icons-material';
 import styled from 'styled-components';
 import Announcement from '../components/Announcement';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import { mobile } from '../responsive';
+import { useSelector } from 'react-redux';
+import StripeCheckOut from 'react-stripe-checkout';
+
+import { useNavigate } from 'react-router-dom';
+import { userRequest } from '../requestMethod';
+
+const KEY = process.env.REACT_APP_STRIPE;
 
 const Container = styled.div``;
 
@@ -20,17 +27,17 @@ const Title = styled.h1`
 const Top = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   padding: 20px;
 `;
 const TopButton = styled.button`
   padding: 10px;
   font-weight: 600;
   cursor: pointer;
-  border: ${(props) => props.type === "filled" && "none"};
+  border: ${(props) => props.type === 'filled' && 'none'};
   background-color: ${(props) =>
-    props.type === "filled" ? "black" : "transparent"};
-  color: ${(props) => props.type === "filled" && "white"};
+    props.type === 'filled' ? 'black' : 'transparent'};
+  color: ${(props) => props.type === 'filled' && 'white'};
 `;
 const TopTexts = styled.div`
   ${mobile({ display: 'none' })}
@@ -145,6 +152,31 @@ const Button = styled.button`
 `;
 
 const Cart = () => {
+  const cart = useSelector((state) => state.cart);
+  const [stripeToken, setStripeToken] = useState(null);
+  const navigate = useNavigate();
+
+  const onToken = (token) => {
+    setStripeToken(token);
+  };
+  useEffect(() => {
+    const makeRequest = async () => {
+      try {
+        const res = await userRequest('/checkout/payment', {
+          tokenId: stripeToken.id,
+          amount: 500,
+        });
+        navigate('/success', {
+          stripeData: res.data,
+          products: cart,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    stripeToken && makeRequest();
+  }, [stripeToken, cart.total, navigate]);
+
   return (
     <Container>
       <Navbar />
@@ -161,77 +193,69 @@ const Cart = () => {
         </Top>
         <Bottom>
           <Info>
-            <Product>
-              <ProductDetail>
-                <Image src="https://hips.hearstapps.com/vader-prod.s3.amazonaws.com/1614188818-TD1MTHU_SHOE_ANGLE_GLOBAL_MENS_TREE_DASHERS_THUNDER_b01b1013-cd8d-48e7-bed9-52db26515dc4.png?crop=1xw:1.00xh;center,top&resize=480%3A%2A" />
-                <Details>
-                  <ProductName>
-                    <b>Product:</b> JESSIE THUNDER SHOES
-                  </ProductName>
-                  <ProductId>
-                    <b>ID:</b> 93813718293
-                  </ProductId>
-                  <ProductColor color="black" />
-                  <ProductSize>
-                    <b>Size:</b> 37.5
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <Add />
-                  <ProductAmount>2</ProductAmount>
-                  <Remove />
-                </ProductAmountContainer>
-                <ProductPrice>$ 30</ProductPrice>
-              </PriceDetail>
-            </Product>
-            <Hr />
-            <Product>
-              <ProductDetail>
-                <Image src="https://i.pinimg.com/originals/2d/af/f8/2daff8e0823e51dd752704a47d5b795c.png" />
-                <Details>
-                  <ProductName>
-                    <b>Product:</b> HAKURA T-SHIRT
-                  </ProductName>
-                  <ProductId>
-                    <b>ID:</b> 93813718293
-                  </ProductId>
-                  <ProductColor color="gray" />
-                  <ProductSize>
-                    <b>Size:</b> M
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <Add />
-                  <ProductAmount>1</ProductAmount>
-                  <Remove />
-                </ProductAmountContainer>
-                <ProductPrice>$ 20</ProductPrice>
-              </PriceDetail>
-            </Product>
+            {cart.products.map((product) => (
+              <Product key={product._id}>
+                <ProductDetail>
+                  <Image src={product.img} />
+                  <Details>
+                    <ProductName>
+                      <b>Product:</b> {product.name}
+                    </ProductName>
+                    <ProductId>
+                      <b>ID:</b> {product._id}
+                    </ProductId>
+                    <ProductColor
+                      color={product.color ? product.color : 'orange'}
+                    />
+                    <ProductSize>
+                      <b>Size:</b> {product.size ? product.size : 'm'}
+                    </ProductSize>
+                  </Details>
+                </ProductDetail>
+                <PriceDetail>
+                  <ProductAmountContainer>
+                    <Add />
+                    <ProductAmount>{product.quantity}</ProductAmount>
+                    <Remove />
+                  </ProductAmountContainer>
+                  <ProductPrice>
+                    ₹{product.price * product.quantity}
+                  </ProductPrice>
+                </PriceDetail>
+                <Hr />
+              </Product>
+            ))}
           </Info>
           <Summary>
             <SummaryTitle>ORDER SUMMARY</SummaryTitle>
             <SummaryItem>
               <SummaryItemText>Subtotal</SummaryItemText>
-              <SummaryItemPrice>$ 80</SummaryItemPrice>
+              <SummaryItemPrice>₹{cart.total}</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Estimated Shipping</SummaryItemText>
-              <SummaryItemPrice>$ 5.90</SummaryItemPrice>
+              <SummaryItemPrice>₹ 5.90</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Shipping Discount</SummaryItemText>
-              <SummaryItemPrice>$ -5.90</SummaryItemPrice>
+              <SummaryItemPrice>₹ -5.90</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem type="total">
               <SummaryItemText>Total</SummaryItemText>
-              <SummaryItemPrice>$ 80</SummaryItemPrice>
+              <SummaryItemPrice>₹ {cart.total}</SummaryItemPrice>
             </SummaryItem>
-            <Button>CHECKOUT NOW</Button>
+            <StripeCheckOut
+              name="Dimple Rahul Shop"
+              image="https://lh3.googleusercontent.com/8UF2xX9hGxR9Jok21gsQFDrHjqL2koiaZ3XMffe1IyaPrtzBN9y9kB4tkklGdzAp8wFI8Dg6cEvmHt_ATAw5KPoCq244QdFg78cy4shvEektl2oiYkR_rq-9jakjTZv6UfORSHQY5VakAWszcoJPAiKj6yvIlWAk6-ZasNcTdKEkek2FrSnQInGQCL6tHogdctLxXBKtY2b5S3fNcrMTlp_k_coJalGYfuCIeCnLknG74WBYw0yhS_QBOgsfLLM5Uvt7TXjCnOjQP24LCpEI1F25ramAqNrnNt1FJgJgnKleBAdArfUUs9nzK3atA35bPquRorL0ldkjdwAV9sVn1-DNI8njXh12oBN97-wDRZeBZTvHFaElwBlkCFtkB2adShWZ8dHZtZdJw8KYK1eNMpvT64GDWScGAigSbMCu3-rvDzCaSSiIWL-Yjy-_f4k-vWmeNy4hcPK7_ybiD2QbB4Myh2gSq3SzRuPfbZCssiw4Q-9tdHB8B2P5p6Kq9xJBmXb_l8KiRqCKIVEqsCHfgnWR8isXHk_ngstz6KGhOEA2_2N9GcRBAukOZpbBlFcZP48Z96BuvIgR7662CkTYA8GXqixlHlqKERrtPaiA2kX6Z7muJ7EE5vBRQrVUv_L5Z-hLIbORHnJuZWw4x7wQ_Tas840--uX4Kqo7DrM1Qr9TlEYm5g8Njxq-t-QR9C5QC7lclJatKJ1qrX-kyZ21CdRv=w744-h990-no?authuser=0"
+              billingAddress
+              shippingAddress
+              description={`Your total is ₹${cart.total}`}
+              amount={cart.total * 100}
+              token={onToken}
+              stripeKey={KEY}
+            >
+              <Button>CHECKOUT NOW</Button>
+            </StripeCheckOut>
           </Summary>
         </Bottom>
       </Wrapper>

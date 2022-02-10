@@ -38,10 +38,9 @@ const deleteProduct = async (req, res) => {
 const getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
-    res.status(200).josn(product);
-  } catch (error) {
-    res.status(500).json(error);
+    res.status(200).json(product);
+  } catch (err) {
+    res.status(500).json(err);
   }
 };
 const allProducts = async (req, res) => {
@@ -63,7 +62,7 @@ const allProducts = async (req, res) => {
     } else {
       products = await Product.find();
     }
-    console.log(products);
+
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json(error);

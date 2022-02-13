@@ -12,8 +12,10 @@ import ForgotPassword from './pages/ForgotPassword';
 import Product from './pages/Product';
 import ProductList from './pages/ProductList';
 import Cart from './pages/Cart';
+import { useSelector } from 'react-redux';
 const App = () => {
-  const user = true;
+  const user = useSelector((state) => state.user.currentUser);
+  // console.log(user);
   return (
     <div>
       <Router>

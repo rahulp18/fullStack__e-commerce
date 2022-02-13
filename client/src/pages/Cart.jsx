@@ -159,22 +159,33 @@ const Cart = () => {
   const onToken = (token) => {
     setStripeToken(token);
   };
+
   useEffect(() => {
     const makeRequest = async () => {
       try {
-        const res = await userRequest('/checkout/payment', {
-          tokenId: stripeToken.id,
-          amount: 500,
-        });
+        const res = await userRequest.post(
+          '/checkout/payment',
+          {
+            tokenId: stripeToken.id,
+            amount: 500,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.REACT_APP_SECRET}`,
+            },
+          }
+        );
         navigate('/success', {
           stripeData: res.data,
           products: cart,
         });
+        console.log(res.data);
       } catch (error) {
         console.log(error);
       }
     };
     stripeToken && makeRequest();
+    console.log(stripeToken);
   }, [stripeToken, cart.total, navigate]);
 
   return (
@@ -189,7 +200,18 @@ const Cart = () => {
             <TopText>Shopping Bag(2)</TopText>
             <TopText>Your Wishlist (0)</TopText>
           </TopTexts>
-          <TopButton type="filled">CHECKOUT NOW</TopButton>
+          <StripeCheckOut
+            name="Dimple Rahul Shop"
+            image="https://lh3.googleusercontent.com/8UF2xX9hGxR9Jok21gsQFDrHjqL2koiaZ3XMffe1IyaPrtzBN9y9kB4tkklGdzAp8wFI8Dg6cEvmHt_ATAw5KPoCq244QdFg78cy4shvEektl2oiYkR_rq-9jakjTZv6UfORSHQY5VakAWszcoJPAiKj6yvIlWAk6-ZasNcTdKEkek2FrSnQInGQCL6tHogdctLxXBKtY2b5S3fNcrMTlp_k_coJalGYfuCIeCnLknG74WBYw0yhS_QBOgsfLLM5Uvt7TXjCnOjQP24LCpEI1F25ramAqNrnNt1FJgJgnKleBAdArfUUs9nzK3atA35bPquRorL0ldkjdwAV9sVn1-DNI8njXh12oBN97-wDRZeBZTvHFaElwBlkCFtkB2adShWZ8dHZtZdJw8KYK1eNMpvT64GDWScGAigSbMCu3-rvDzCaSSiIWL-Yjy-_f4k-vWmeNy4hcPK7_ybiD2QbB4Myh2gSq3SzRuPfbZCssiw4Q-9tdHB8B2P5p6Kq9xJBmXb_l8KiRqCKIVEqsCHfgnWR8isXHk_ngstz6KGhOEA2_2N9GcRBAukOZpbBlFcZP48Z96BuvIgR7662CkTYA8GXqixlHlqKERrtPaiA2kX6Z7muJ7EE5vBRQrVUv_L5Z-hLIbORHnJuZWw4x7wQ_Tas840--uX4Kqo7DrM1Qr9TlEYm5g8Njxq-t-QR9C5QC7lclJatKJ1qrX-kyZ21CdRv=w744-h990-no?authuser=0"
+            billingAddress
+            shippingAddress
+            description={`Your total is ₹${cart.total}`}
+            amount={cart.total * 100}
+            token={onToken}
+            stripeKey={KEY}
+          >
+            <Button>CHECKOUT NOW</Button>
+          </StripeCheckOut>
         </Top>
         <Bottom>
           <Info>

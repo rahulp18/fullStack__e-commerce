@@ -5,6 +5,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const productRoutes = require('./routes/product');
 const cartRoutes = require('./routes/cart');
+const paymentRoutes = require('./routes/stripe');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
@@ -17,4 +18,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
-app.listen(PORT, () => console.log(`Server is listing on port number ${PORT}`));
+app.use('/api/checkout', paymentRoutes);
+app.listen(PORT, () =>
+  console.log(
+    `Server is listing on port number ${PORT} secret key ${process.env.STRIPE_KEY} `
+  )
+);

@@ -147,7 +147,7 @@ const Product = () => {
       setQuantity(quantity + 1);
     }
   };
-  const handleClick = () => {
+ const handleClick = () => {
     console.log(color, size);
     dispatch(addProduct({ ...product, quantity, color, size }));
   };
